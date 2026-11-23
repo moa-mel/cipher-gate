@@ -7,6 +7,7 @@ import { createOffer } from '@/lib/offer';
 import { createBrowserNodeSession } from '@/lib/node-session';
 import { encryptedSellerProfile } from '@/lib/progress';
 import styles from '../ciphergate.module.css';
+import Link from 'next/link';
 
 const initialResource = {
   resourceType: 'research-report',
@@ -136,6 +137,14 @@ export default function CipherGateProviderPage() {
       <div className={styles.container}>
         <p className={styles.eyebrow}>CipherGate · Provider</p>
         <h1 className={styles.heading}>Publish an encrypted API resource.</h1>
+        <div className={styles.actions}>
+          <Link
+            href="/ciphergate/agent"
+            className={`${styles.button} ${styles.secondary}`}
+          >
+            Open Agent →
+          </Link>
+        </div>
         <p className={styles.lede}>
           Seller C encrypts a JSON response with the same AES-256-GCM and Fiber invoice-preimage
           mechanism used in the official tutorial. The API publishes only the encrypted offer.
