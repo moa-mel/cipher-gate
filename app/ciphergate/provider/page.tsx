@@ -47,8 +47,11 @@ export default function CipherGateProviderPage() {
   const [resourceUrl, setResourceUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     return () => {
       void session.stop().catch(() => undefined);
     };
@@ -248,7 +251,7 @@ export default function CipherGateProviderPage() {
 
             <button
               className={`${styles.button} ${styles.secondary}`}
-              disabled={Boolean(busy || !nodeStarted)}
+               disabled={!mounted || busy || !nodeStarted}
               onClick={() => void run(openChannel)}
             >
               Open / reuse Bottle channel
@@ -256,7 +259,7 @@ export default function CipherGateProviderPage() {
 
             <button
               className={`${styles.button} ${styles.secondary}`}
-              disabled={Boolean(busy || !nodeStarted)}
+               disabled={!mounted || busy || !nodeStarted}
               onClick={() => void run(refreshChannel)}
             >
               Refresh channel
