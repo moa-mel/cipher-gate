@@ -2,7 +2,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { FiberBrowserNode, Channel } from '@fiber-pay/sdk/browser';
+import {
+    scriptToAddress,
+    type FiberBrowserNode,
+    type Channel,
+} from '@fiber-pay/sdk/browser';
 import { startRole, connectAndOpenChannel, readChannel, ready } from '@/lib/fiber';
 import { createBrowserNodeSession } from '@/lib/node-session';
 import { encryptedBuyerProfile } from '@/lib/progress';
@@ -11,6 +15,8 @@ import { payAndDecryptChallenge } from '@/lib/ciphergate/agent-client';
 import { decodeBrowserBase64 } from '@/lib/ciphergate/x402';
 import type { X402PaymentRequired } from '@/lib/ciphergate/types';
 import styles from '../ciphergate.module.css';
+
+
 
 type ApiChallengeBody = {
     x402Version: 2;
@@ -67,6 +73,7 @@ export default function CipherGateAgentPage() {
     const [receipt, setReceipt] = useState<CipherGateReceipt | null>(null);
     const [dailySpend, setDailySpend] = useState('0');
     const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [fundingAddress, setFundingAddress] = useState('');
 
     useEffect(() => {
         setDailySpend(getTodaySpend().toString());
@@ -113,11 +120,26 @@ export default function CipherGateAgentPage() {
             throw new Error('Buyer A did not start.');
         }
 
-        // Trigger a React render after the browser node starts.
+        // Retrieve Buyer A's node information.
+        const info = await node.getNodeInfo();
+
+        // Derive the CKB Testnet funding address.
+        if (!info.default_funding_lock_script) {
+            throw new Error(
+                'Buyer A started, but its default CKB funding lock script is unavailable.'
+            );
+        }
+
+        const address = scriptToAddress(
+            info.default_funding_lock_script,
+            'testnet'
+        );
+
+        setFundingAddress(address);
         setBuyerStarted(true);
 
         setStatus(
-            'Buyer A is running. Connect to Bottle and check the channel.'
+            'Buyer A is running. Copy its Testnet CKB funding address, fund it, then connect to Bottle.'
         );
     }
 
@@ -335,6 +357,42 @@ export default function CipherGateAgentPage() {
                         <dt>Required state</dt>
                         <dd>CHANNEL_READY</dd>
                     </dl>
+
+                    {fundingAddress && (
+                        <div className={styles.result}>
+                            <h3>Buyer A CKB Testnet Funding Address</h3>
+
+                            <p className={styles.muted}>
+                                Send more than 500 Testnet CKB to this address.
+                                Keep additional CKB available for the transaction fee.
+                            </p>
+
+                            <code
+                                style={{
+                                    display: 'block',
+                                    overflowWrap: 'anywhere',
+                                    padding: '12px',
+                                    marginTop: '12px',
+                                    background: 'rgba(128, 128, 128, 0.12)',
+                                    borderRadius: '8px',
+                                }}
+                            >
+                                {fundingAddress}
+                            </code>
+
+                            <button
+                                type="button"
+                                className={styles.button}
+                                onClick={() => {
+                                    void navigator.clipboard.writeText(fundingAddress);
+                                    setStatus('Buyer A funding address copied.');
+                                }}
+                            >
+                                Copy funding address
+                            </button>
+                        </div>
+                    )}
+
                 </section>
 
                 <section className={styles.card}>

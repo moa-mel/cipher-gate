@@ -7,7 +7,7 @@ export const channelFundingGuidance =
 
 export async function requireNewChannelFunding(node: FiberBrowserNode) {
   const { default_funding_lock_script: script } = await node.nodeInfo();
-  const response = await fetch('https://testnet.ckbapp.dev/', {
+  const response = await fetch('https://testnet.ckb.dev//', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal: AbortSignal.timeout(10_000),

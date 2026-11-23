@@ -3,6 +3,7 @@ import { requireNewChannelFunding } from './channel-funding';
 import { encryptedBuyerProfile, encryptedSellerProfile, savedNodeIdentifier } from './progress';
 import type { Channel, FiberBrowserNode } from '@fiber-pay/sdk/browser';
 
+
 export const channelFundingCkb = 500n;
 
 export const bottle = {
