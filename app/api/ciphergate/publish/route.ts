@@ -7,6 +7,12 @@ export const runtime = 'nodejs';
 function isHex(value: unknown, bytes: number): value is `0x${string}` {
   return typeof value === 'string' && new RegExp(`^0x[0-9a-fA-F]{${bytes * 2}}$`).test(value);
 }
+function isCompressedPubkey(value: unknown): boolean {
+  return (
+    typeof value === 'string' &&
+    /^(?:0x)?[0-9a-fA-F]{66}$/.test(value)
+  );
+}
 
 function isHexBytes(value: unknown): value is `0x${string}` {
   return typeof value === 'string' && /^0x(?:[0-9a-fA-F]{2})+$/.test(value);
@@ -26,7 +32,7 @@ function isOffer(value: unknown): value is PublicEncryptedOffer {
     /^0x[0-9a-fA-F]{24}$/.test(offer.iv) &&
     isHex(offer.paymentHash, 32) &&
     !!lastHop &&
-    isHex(lastHop.pubkey, 33) &&
+    isCompressedPubkey(lastHop.pubkey) &&
     typeof lastHop.channel_outpoint === 'string' &&
     typeof lastHop.fee_rate === 'string' &&
     typeof lastHop.tlc_expiry_delta === 'string'

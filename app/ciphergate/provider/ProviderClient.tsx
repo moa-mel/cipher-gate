@@ -107,7 +107,7 @@ export default function CipherGateProviderPage() {
         console.log(
             'Public key valid:',
             typeof info.pubkey === 'string' &&
-            /^0x[0-9a-fA-F]{66}$/.test(info.pubkey)
+            /^(?:0x)?[0-9a-fA-F]{66}$/.test(info.pubkey)
         );
 
         const { scriptToAddress } = await import('@fiber-pay/sdk/browser');
@@ -195,7 +195,47 @@ export default function CipherGateProviderPage() {
         );
 
         const offer = JSON.parse(offerJson) as Record<string, unknown>;
+
+        const lastHop =
+            offer.lastHop && typeof offer.lastHop === 'object'
+                ? offer.lastHop as Record<string, unknown>
+                : undefined;
+
+        console.log('[CipherGate] Offer diagnostic:', {
+            offerKeys: Object.keys(offer),
+            version: offer.version,
+            cipher: offer.cipher,
+            invoiceValid:
+                typeof offer.invoice === 'string' &&
+                offer.invoice.toLowerCase().startsWith('fibt'),
+            ciphertextValid:
+                typeof offer.ciphertext === 'string' &&
+                /^0x(?:[0-9a-fA-F]{2})+$/.test(offer.ciphertext),
+            ivValid:
+                typeof offer.iv === 'string' &&
+                /^0x[0-9a-fA-F]{24}$/.test(offer.iv),
+            paymentHashValid:
+                typeof offer.paymentHash === 'string' &&
+                /^0x[0-9a-fA-F]{64}$/.test(offer.paymentHash),
+            lastHopExists: !!lastHop,
+            lastHopKeys: lastHop ? Object.keys(lastHop) : [],
+            lastHopPubkey: lastHop?.pubkey,
+            lastHopChannelOutpoint: lastHop?.channel_outpoint,
+            lastHopFeeRate: lastHop?.fee_rate,
+            lastHopTlcExpiryDelta: lastHop?.tlc_expiry_delta,
+        });
+
         const info = await node.nodeInfo();
+
+        const sellerPubkey = `0x${info.pubkey.replace(/^0x/i, '')}`;
+
+        if (!/^0x[0-9a-fA-F]{66}$/.test(sellerPubkey)) {
+            throw new Error(
+                `Invalid Seller Fiber public key: ${String(info.pubkey)}`
+            );
+        }
+
+        console.log('Seller public key for publishing:', sellerPubkey);
 
         const response = await fetch('/api/ciphergate/publish', {
             method: 'POST',
@@ -206,7 +246,7 @@ export default function CipherGateProviderPage() {
                 slug,
                 title,
                 description,
-                sellerPubkey: info.pubkey,
+                sellerPubkey,
                 offer,
             }),
         });
