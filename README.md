@@ -1,7 +1,7 @@
 # CipherGate
 ### Pay for Data. Unlock with Payment.
 
-**CipherGate is a payment-gated API delivery prototype built on Fiber Network. It enables developers to publish encrypted digital resources and allows buyers—or AI agents acting on their behalf—to pay a Fiber invoice before obtaining the cryptographic material required to decrypt those resources.**
+**CipherGate is a payment-gated API delivery prototype built on Fiber Network. It enables developers to publish encrypted digital resources and allows buyers or AI agents acting on their behalf to pay a Fiber invoice before obtaining the cryptographic material required to decrypt those resources.**
 
 Instead of treating payment and access as two loosely connected application steps, CipherGate connects them cryptographically: the AES-256-GCM encryption key is used as the Fiber invoice payment preimage. When the buyer completes the payment, the Fiber payment result returns that preimage. The buyer can then decrypt the resource locally.
 
