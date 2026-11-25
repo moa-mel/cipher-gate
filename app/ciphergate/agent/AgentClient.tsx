@@ -165,7 +165,7 @@ export default function CipherGateAgentPage() {
         setStatus(
             opened && ready(opened)
                 ? 'Buyer channel is CHANNEL_READY.'
-                : 'Channel opening was submitted. Refresh until it reaches CHANNEL_READY.'
+                : 'Bottle is connected, but no channel exists yet. Channel opening has not been attempted.'
         );
     }
 

@@ -60,19 +60,86 @@ export function ready(channel: Channel) {
   return channel.state.state_name.replace(/[^a-z0-9]/gi, '').toLowerCase() === 'channelready';
 }
 
+// export async function connectAndOpenChannel(node: FiberBrowserNode) {
+//   await node.connectPeer(bottle);
+//   const existing = await readChannel(node);
+//   if (!existing) {
+//     await requireNewChannelFunding(node);
+//     await node.openChannel({
+//       pubkey: bottle.pubkey,
+//       funding_amount: `0x${(channelFundingCkb * 100_000_000n).toString(16)}`,
+//       public: true,
+//     });
+//   }
+//   return readChannel(node);
+// }
+
+
 export async function connectAndOpenChannel(node: FiberBrowserNode) {
+  const normalize = (value: string) =>
+    value.replace(/^0x/i, '').toLowerCase();
+
+  console.log('[CipherGate] Connecting to Bottle...');
+
   await node.connectPeer(bottle);
-  const existing = await readChannel(node);
-  if (!existing) {
-    await requireNewChannelFunding(node);
-    await node.openChannel({
-      pubkey: bottle.pubkey,
-      funding_amount: `0x${(channelFundingCkb * 100_000_000n).toString(16)}`,
-      public: true,
-    });
+
+  let bottleConnected = false;
+
+  for (let attempt = 1; attempt <= 15; attempt++) {
+    const result = await node.listPeers();
+
+    bottleConnected = result.peers.some(
+      (peer) =>
+        normalize(peer.pubkey) === normalize(bottle.pubkey)
+    );
+
+    console.log(
+      `[CipherGate] Peer check ${attempt}/15:`,
+      bottleConnected ? 'Bottle connected' : 'Waiting for Bottle'
+    );
+
+    if (bottleConnected) break;
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+
+  if (!bottleConnected) {
+    throw new Error(
+      'Bottle did not appear in Buyer A peer list after 15 seconds.'
+    );
+  }
+
+  console.log('[CipherGate] Bottle peer connection confirmed.');
+
+  // Allow time for the peer connection to initialize.
+  await new Promise((resolve) => setTimeout(resolve, 3000));
+
+  const existing = await readChannel(node);
+
+  if (existing) {
+    console.log('[CipherGate] Existing channel:', existing);
+    return existing;
+  }
+
+  console.log('[CipherGate] Checking Buyer A channel funding...');
+
+  await requireNewChannelFunding(node);
+
+  console.log('[CipherGate] Opening Bottle channel...');
+
+  await node.openChannel({
+    pubkey: bottle.pubkey,
+    funding_amount: `0x${(
+      channelFundingCkb * 100_000_000n
+    ).toString(16)}`,
+    public: true,
+  });
+
+  console.log('[CipherGate] Channel opening request submitted.');
+
   return readChannel(node);
 }
+
 
 export async function readChannel(node: FiberBrowserNode) {
   const channels = (await node.listChannels()).channels.filter((channel) =>
